@@ -5,6 +5,10 @@ from models import Unit, Customer, Item, StockItem, Batch, BatchItem
 from starlette_admin import CollectionField, IntegerField, TextAreaField, StringField
 import json
 from sqlalchemy.orm import joinedload
+from sqlalchemy import update, delete, select
+import qrcode
+import io
+from starlette.responses import StreamingResponse
 
 
 class UnitView(ModelView):
@@ -20,11 +24,6 @@ class ItemView(ModelView):
     label = "Номенклатура"
 
     async def find_all(self, request, skip=0, limit=100, where=None, order_by=None):
-##        print("\n" + "="*50, flush=True)
-##        print(f"URL: {request.url}", flush=True)
-##        print(f"METHOD: {request.method}", flush=True)
-##        print(f"QUERY PARAMS: {dict(request.query_params)}", flush=True)
-##        print("="*50 + "\n", flush=True)
         return await super().find_all(request, skip, limit, where, order_by)
 
 
@@ -51,10 +50,32 @@ class BatchView(ModelView):
     async def before_create(self, request, data, obj):
         raw_items = data.pop("items_data", "[]") or "[]"
         items_list = json.loads(raw_items) if isinstance(raw_items, str) else raw_items
+
         obj.items = [
             BatchItem(item_id=int(i['item_id']), quantity=float(i['quantity']))
             for i in items_list
         ]
+
+        self._pending_items = items_list
+
+    async def after_create(self, request, obj):
+        if not hasattr(self, '_pending_items') or not self._pending_items:
+            return
+
+        session = request.state.session
+
+        for item_data in self._pending_items:
+            item_id = item_data['item_id']
+            qty_to_deduct = item_data['quantity']
+
+            stmt = update(StockItem).where(StockItem.item_id == item_id).values(quantity=StockItem.quantity - qty_to_deduct)
+            await session.execute(stmt)
+
+            delete_stmt = delete(StockItem).where(StockItem.item_id == item_id, StockItem.quantity <= 0)
+            await session.execute(delete_stmt)
+
+        await session.commit()
+        del self._pending_items
 
 class BatchItemView(ModelView):
     identity = "batch_item"

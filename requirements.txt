@@ -8,3 +8,4 @@ itsdangerous
 faker
 alembic
 psycopg2-binary
+qrcode[pil]
