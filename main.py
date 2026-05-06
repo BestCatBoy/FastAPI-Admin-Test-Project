@@ -1,3 +1,9 @@
+import os  # 1. Импортируем os
+from dotenv import load_dotenv  # 2. Импортируем загрузчик (нужен пакет python-dotenv)
+
+# 3. Загружаем переменные из файла .env в самом начале
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -18,6 +24,8 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 admin = create_admin(engine)
 
+BASE_DOMAIN = os.getenv("DOMAIN", "localhost")
+
 @app.get("/admin/batch/download_qr/{pk}")
 async def download_qr(pk: int):
     async with AsyncSessionLocal() as session:
@@ -28,7 +36,7 @@ async def download_qr(pk: int):
         if not obj or not obj.public_id:
             raise HTTPException(status_code=404, detail="Batch not found")
 
-        confirm_url = f"http://localhost:9000/admin/batch/confirm/{obj.public_id}"
+        confirm_url = f"http://{BASE_DOMAIN}/admin/batch/confirm/{obj.public_id}"
 
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(confirm_url)

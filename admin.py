@@ -91,7 +91,7 @@ def create_admin(engine: AsyncEngine) -> Admin:
     admin.add_view(BatchView(Batch))
     admin.add_view(BatchItemView(BatchItem))
 
-    provider = MyAuthProvider()
-    provider.setup_admin(admin)
+    ##provider = MyAuthProvider()
+    ##provider.setup_admin(admin)
 
     return admin
