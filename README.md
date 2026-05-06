@@ -1,4 +1,4 @@
-# FastAPI Admin Test Project
+# FastAPI + Starlette-Admin demo project
 
 
 > ⚠️ **Важно для использования из РФ:**
