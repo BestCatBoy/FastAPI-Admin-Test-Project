@@ -1,9 +1,4 @@
-import os  # 1. Импортируем os
-from dotenv import load_dotenv  # 2. Импортируем загрузчик (нужен пакет python-dotenv)
-
-# 3. Загружаем переменные из файла .env в самом начале
-load_dotenv()
-
+import os
 from fastapi import FastAPI, HTTPException
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -16,6 +11,9 @@ import qrcode
 import io
 from sqlalchemy import select, update
 
+
+BASE_DOMAIN = os.getenv("DOMAIN", "localhost")
+
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -23,8 +21,6 @@ app = FastAPI(default_response_class=ORJSONResponse, debug=True)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 admin = create_admin(engine)
-
-BASE_DOMAIN = os.getenv("DOMAIN", "localhost")
 
 @app.get("/admin/batch/download_qr/{pk}")
 async def download_qr(pk: int):
