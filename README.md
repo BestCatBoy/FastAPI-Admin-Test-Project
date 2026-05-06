@@ -18,4 +18,4 @@
     docker-compose exec app alembic upgrade head
     ```
 4.  **Доступ к админ-панели:**
-    [http://localhost:8000/admin](http://localhost:8000/admin)
+    [http://localhost:9000/admin](http://localhost:9000/admin)
